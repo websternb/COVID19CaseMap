@@ -23,6 +23,8 @@
 </head>
 <body>
 <div id='map'></div>
+<div class='legend'></div>
+
 <h1>COVID-19 Cases by U.S. States, March 20th, 2021</h1>
 
 <script>
@@ -48,6 +50,105 @@ fillOpacity: 0.7,
 fillColor: getColor(feature.properties.density)
 };
 }
+
+function highlightFeature(e) {
+var layer = e.target;
+layer.setStyle({
+weight: 8,
+opacity: 0.8,
+color: '#e3e3e3',
+fillColor: '#1c5ee3',
+fillOpacity: 0.5
+});
+
+layer.bringToFront();
+info.update(layer.feature.properties);
+}
+
+function resetHighlight(e) {
+geojson.resetStyle(e.target);
+info.update();
+
+var geojson = null;
+function zoomToFeature(e) {
+map.fitBounds(e.target.getBounds());
+}
+function onEachFeature(feature, layer) {
+layer.on({
+mouseover: highlightFeature,
+click: zoomToFeature,
+mouseout: resetHighlight
+});
+}
+geojson = L.geoJson.ajax("assets/us-states.geojson", {
+style: style,
+onEachFeature: onEachFeature
+}).addTo(map);
+var info = L.control();
+info.onAdd = function (map) {
+this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+this.update();
+return this._div;
+};
+
+info.update = function (props) {
+this._div.innerHTML = '<h4>US Population Density</h4>' + (props ?
+'<b>' + props.name + '</b><br />' + props.density + ' people / mi<sup>2</sup>'
+: 'Hover over a state');
+};
+info.addTo(map);
+
+info {
+z-index: 1000;
+position: absolute;
+right: 20px;
+top: 20px;
+padding: 6px 8px;
+font: 14px Arial, Helvetica, sans-serif;
+text-align: right;
+background: white;
+background: rgba(255, 255, 255, 0.8);
+box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+border-radius: 5px;
+}
+.info h1 {
+font-size: 16px;
+margin: 0 0 5px;
+color: #777777;
+}
+
+var labels = [];
+for (var i = 0; i < grades.length - 1; i++) {
+labels.push('<i style="background:' + colors[i] +
+'"></i> ' + grades[i] + ' - ' + grades[i + 1]);
+}
+labels.push('<i style="background:' + colors[grades.length - 1] +
+'"></i> ' + grades[grades.length - 1] + ' +');
+$(".legend").html(labels.join('<br>'));
+
+.legend {
+z-index: 1000;
+position: absolute;
+right: 20px;
+bottom: 20px;
+padding: 6px 8px;
+font: 14px Arial, Helvetica, sans-serif;
+background: white;
+background: rgba(255, 255, 255, 0.8);
+box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+border-radius: 5px;
+}
+.legend i {
+width: 18px;
+height: 16px;
+float: left;
+margin-right: 8px;
+opacity: 0.7;
+}
+
+map.attributionControl.addAttribution('COVID-19 Case Count;
+<a href="http://worldometers.info/coronavirus">US Census Bureau</a> |
+This map is made by Nick Webster</a>');
 
 
 geojson = L.geoJson.ajax("assets/gz_2010_us_040_00_500k.json").addTo(map);
